@@ -1,12 +1,14 @@
 import { Module } from '@nestjs/common';
+import { CacheModule } from '@nestjs/cache-manager';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigModule here
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { redisStore } from 'cache-manager-redis-store';
 
 @Module({
   imports: [
-    ConfigModule, // Include ConfigModule in imports
+    ConfigModule,
     TypeOrmModule.forRootAsync({
-      imports: [ConfigModule], // Use ConfigModule instead of ConfigService
+      imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
@@ -18,6 +20,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config'; // Import ConfigMo
         autoLoadEntities: true,
         synchronize: true, // Set false in production
       }),
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get<string>('REDIS_HOST'),
+        port: configService.get<number>('REDIS_PORT'),
+        password: configService.get<string>('REDIS_PASSWORD'),
+        ttl: 60, // Cache time-to-live in seconds
+      }),
+      inject: [ConfigService],
     }),
   ],
 })
