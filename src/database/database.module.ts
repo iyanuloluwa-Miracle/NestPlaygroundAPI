@@ -29,7 +29,7 @@ import { redisStore } from 'cache-manager-redis-store';
         host: configService.get<string>('REDIS_HOST'),
         port: configService.get<number>('REDIS_PORT'),
         password: configService.get<string>('REDIS_PASSWORD'),
-        ttl: 60, // Cache time-to-live in seconds
+        ttl: configService.get<number>('CACHE_TTL', 60),
       }),
       inject: [ConfigService],
     }),
